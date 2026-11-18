@@ -2,5 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  serverExternalPackages: ["ws"],
 };
+
 export default nextConfig;

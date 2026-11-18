@@ -21,7 +21,7 @@ export async function supabaseRequest(path: string, init: RequestInit = {}) {
   if (!url || !key) throw new Error("Supabase call storage is not configured.");
   const headers = new Headers(init.headers);
   headers.set("apikey", key);
-  headers.set("Authorization", `Bearer ${key}`);
+  if (!key.startsWith("sb_secret_")) {   headers.set("Authorization", `Bearer ${key}`); }
   const result = await fetch(new URL(path, url), { ...init, headers, cache: "no-store", signal: AbortSignal.timeout(12000) });
   if (!result.ok) throw new Error(`Supabase request failed (HTTP ${result.status}).`);
   return result;

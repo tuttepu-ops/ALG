@@ -1,0 +1,14 @@
+node_modules
+.next
+.env
+.env.local
+.env*.local
+.cache
+data/outcomes.json
+data/reports.json
+test-results
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+data/

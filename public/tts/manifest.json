@@ -1,0 +1,298 @@
+{
+  "entries": {
+    "114b704ebfd95385067bc352893c9588": {
+      "text": "నమస్తే అండి, Godavari Basket voice assistant‌ని. మీ order గురించి ఒక్క నిమిషం మాట్లాడొచ్చా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 91
+    },
+    "94c4ec35d2e3d14ee50200ba0e5b6941": {
+      "text": "హా, నమస్తే అండి! మీ Godavari Basket order confirm చేయడానికి call చేశాను. ఇప్పుడు మాట్లాడొచ్చా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 94
+    },
+    "ffcb14e4b22f7ab5c1b6a51d7d940833": {
+      "text": "హా అండి, వినిపిస్తోంది. ఇప్పుడు మాట్లాడొచ్చా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 45
+    },
+    "536f4b60e14f570f6aa56bca0649465a": {
+      "text": "మీరు Godavari Basket లో order చేశారు కదా అండి. Dispatch చేసే ముందు ఒకసారి confirm చేయడానికి call చేశాను. ఇప్పుడు మాట్లాడొచ్చా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 126
+    },
+    "9af554aa7670ae14651217be82a5349d": {
+      "text": "నేను Godavari Basket నుంచి మాట్లాడుతున్నాను అండి, మీ order confirm చేయడానికి. ఇప్పుడు మాట్లాడొచ్చా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 99
+    },
+    "1b368b2a0222457331f267cd7d3f3213": {
+      "text": "థాంక్స్ అండి.",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 13
+    },
+    "6ebd3dc16e8a99f64f43a4f2b9258d15": {
+      "text": "మీ order confirm చేయడానికే call చేశాను అండి.",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 44
+    },
+    "fedadb67dae038155dce56769268a518": {
+      "text": "నమస్తే అండి, థాంక్స్.",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 21
+    },
+    "04d9e48a808163ad468451b351840d62": {
+      "text": "మీ order dispatch చేసే ముందు, items, total సరిగ్గా ఉన్నాయో లేదో చూడడానికి అండి. Confirm చేయనా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 94
+    },
+    "80aa64dca780845024167953249450df": {
+      "text": "నేను Godavari Basket నుంచి మాట్లాడుతున్నాను అండి. మీ order confirm చేయనా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 73
+    },
+    "7a7b2110b64688ea3c9137ca154571c0": {
+      "text": "Confirm అయ్యాక delivery details మీకు message లో పంపిస్తాం అండి.",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 63
+    },
+    "745545e1a4a6202a01671cc7e176de40": {
+      "text": "ఆ విషయం మా team మీకు చెప్తారు అండి.",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 35
+    },
+    "29def82184be640defe056fed0ca91a1": {
+      "text": "సరే అండి, మీ order confirm చేశాను. త్వరలోనే dispatch చేస్తాం. Thank you అండి!",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 77
+    },
+    "30866527f1fd8215ab76f73796866112": {
+      "text": "సరే అండి. ఏమైనా మార్చాలా, లేక order cancel చేయాలా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 50
+    },
+    "9f44a8a3fa06db65e0c578d726c6f92c": {
+      "text": "చెప్పండి అండి, ఏం మార్చాలి?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 27
+    },
+    "77aea333b96424b5f9227bad32b17e96": {
+      "text": "సరే అండి, మీ change request మా staff కి పంపాను. వాళ్ళు త్వరలో మీకు confirm చేస్తారు. Thank you అండి!",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 100
+    },
+    "32be78126291ad8a732435dc77d00cfe": {
+      "text": "సరే అండి. మీ order cancel చేయమని మా staff కి request పెట్టనా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 61
+    },
+    "0ea871c9e386b00169e37c7c68736c34": {
+      "text": "సరే అండి, cancel request మా staff కి పంపాను. Thank you అండి!",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 60
+    },
+    "3a3a0b7f0e00a1f90495a8e1a3957105": {
+      "text": "సరే అండి, ఏం మార్చాలో మళ్ళీ ఒకసారి చెప్పండి.",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 44
+    },
+    "d54c55193837010e1e5e3d743221dd4f": {
+      "text": "సరే అండి. అయితే order confirm చేయనా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 36
+    },
+    "5c8c2d0836b7db303a6f7f4f75cdc780": {
+      "text": "పర్లేదు అండి. మీకు ఏ time లో call చేస్తే బాగుంటుంది?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 52
+    },
+    "78b48998c158dec987c6214ed2cce019": {
+      "text": "సరే అండి, మా team తర్వాత మీకు call చేస్తుంది. Thank you అండి!",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 61
+    },
+    "efd0ebd8bc70df0ab9e25fb14560d027": {
+      "text": "సరే అండి, మీరు చెప్పిన time కి మళ్ళీ call చేస్తాం. Thank you అండి!",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 66
+    },
+    "9e6b4786f7b5df23df28448490a56dae": {
+      "text": "సరే అండి, తర్వాత మళ్ళీ call చేస్తాం. Thank you అండి!",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 52
+    },
+    "302b806083acc357629d7ec18dbd98cd": {
+      "text": "సరే అండి, wait చేస్తాను.",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 24
+    },
+    "22287846fa610e5c9fd414194b56c384": {
+      "text": "క్షమించండి అండి, సరిగ్గా వినపడలేదు. ఇప్పుడు ఒక్క నిమిషం మాట్లాడొచ్చా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 69
+    },
+    "1ff993a03be8e7df3f91832ba6743660": {
+      "text": "క్షమించండి అండి. Order confirm చేయనా, లేక ఏమైనా మార్చాలా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 57
+    },
+    "3f5c5568b0207ce4742a92c6a6d14e77": {
+      "text": "క్షమించండి అండి, ఏ item మార్చాలో ఒకసారి చెప్తారా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 49
+    },
+    "1fcf3bd54ec1f8ec7bffd11b59bc8854": {
+      "text": "క్షమించండి అండి. ఇలా staff కి చెప్పనా? అవును లేదా కాదు చెప్పండి.",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 64
+    },
+    "052fb5191eaa3c395869adf7bc9b5ce2": {
+      "text": "ఏ time కి call చేయాలి అండి? ఉదాహరణకి, సాయంత్రం ఆరు గంటలకి.",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 58
+    },
+    "c644dd2e5952876791135c811f6ed562": {
+      "text": "పర్లేదు అండి. మా staff మీకు తర్వాత call చేసి మాట్లాడతారు. Thank you అండి!",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 73
+    },
+    "897fd0d0db19f87b4186140b95ff8d9b": {
+      "text": "క్షమించండి అండి, ఒక్కసారి సింపుల్ గా చెప్తారా? Confirm చేయాలా, ఏమైనా మార్చాలా, లేక తర్వాత call చేయాలా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 102
+    },
+    "85441965bcdb9391c5a0e70782f0a52b": {
+      "text": "హా అండి, వినిపిస్తోంది.",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 23
+    },
+    "cec643e6bd14e3e1db8b066daec7a5bb": {
+      "text": "Thank you అండి, మీ request ఇప్పటికే save అయ్యింది.",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 50
+    },
+    "3ee7c2fd37e04d3ff9dee8ff8d1c0df9": {
+      "text": "ఒక్కసారి మీ order పూర్తిగా చెప్తాను అండి.",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 41
+    },
+    "f752a7e1fcc840f57616ede8af046985": {
+      "text": "ఇప్పుడు మాట్లాడొచ్చా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 21
+    },
+    "ee6f50943a73bc929b763359d77acb20": {
+      "text": "Confirm చేయనా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 14
+    },
+    "0340afa875fdebde25442fb83a3cc879": {
+      "text": "ఏం మార్చాలి అండి?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 17
+    },
+    "6f4c29c932591a3c1f1f0a7e6bb7a936": {
+      "text": "ఇలా staff కి చెప్పనా?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 21
+    },
+    "edfad16becb42723097fba8022654dbd": {
+      "text": "Cancel request పెట్టనా అండి?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 28
+    },
+    "aa616e3376aece2960cbc1e4fe51bcf0": {
+      "text": "ఏ time కి call చేయాలి అండి?",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 27
+    },
+    "8bbce36d84aa3a176c2ce1c3d23ebae0": {
+      "text": "Thank you అండి!",
+      "speaker": "kavitha_te_conversation",
+      "model": "bulbul:v4-flash",
+      "pace": 1,
+      "chars": 15
+    }
+  }
+}

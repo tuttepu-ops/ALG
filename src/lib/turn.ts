@@ -1,4 +1,5 @@
 import { DEMO_ID, shopTurn } from "./workflow/shop";
+import { GEMINI_MODEL, geminiAgentRequest } from "./providers/gemini";
 import { agentTurn } from "./agent/hospitalAgent";
 import { getConfig } from "./config";
 import { hospitalTurn, isHospitalCall, type HospitalOptions } from "./workflow/hospital";
@@ -29,7 +30,7 @@ export interface TurnInput {
   /** Hospital calls: slots already booked by other calls (slot → count). */
   taken?: Record<string, number>;
   /** AI hospital agent: bookings by other calls, "doctorId|date" → count. */
-  agentTaken?: Record<string, number>;
+  agentTaken?: Record<string, number> | (() => Promise<Record<string, number>>);
   /** AI agent streaming: the reply's first sentence, as soon as it is written. */
   onFirst?: (text: string) => void;
   /** The acknowledgement the browser already played for this turn. */
@@ -55,8 +56,8 @@ export async function runTurn(
   const { state, order, text, interrupted } = input;
   const ctx = { text, interrupted };
 
-  if (isHospitalCall(order.id) && getConfig().hospitalEngine === "ai") {
-    const r = await agentTurn(state, text, !!interrupted, { taken: input.agentTaken, onFirst: input.onFirst, ackPlayed: input.ackPlayed });
+  if (isHospitalCall(order.id) && (state.agentProvider === "gemini" || getConfig().hospitalEngine === "ai")) {
+    const r = await agentTurn(state, text, !!interrupted, { taken: input.agentTaken, onFirst: input.onFirst, ackPlayed: input.ackPlayed, ...(state.agentProvider === "gemini" ? { modelOverride: GEMINI_MODEL, request: geminiAgentRequest() } : {}) });
     return { ...r, diag: { route: r.diag ? (r.diag.ok ? "openai" : "openai_failed") : "workflow", intent: r.outcome?.kind ?? null, llmReason: "AI agent", llm: r.diag, manualOptions: null } };
   }
 

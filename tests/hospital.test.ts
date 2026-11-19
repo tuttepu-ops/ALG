@@ -32,7 +32,7 @@ const detail = (o: Outcome | null) => JSON.parse(o!.detail!);
 describe("inbound call — the reference script", () => {
   it("follows the script end to end, without the model", async () => {
     const c = await inbound();
-    expect(c.opening).toBe("నమస్కారం అండి! సాయి విశ్వాస్ hospital నుంచి రవి మాట్లాడుతున్నాను. చెప్పండి అండి, మీకు ఎలా help చేయగలను?");
+    expect(c.opening).toBe("నమస్కారం అండి! సాయి విశ్వాస్ hospital నుంచి శంకర్ మాట్లాడుతున్నాను. చెప్పండి అండి, మీకు ఎలా help చేయగలను?");
     expect(c.opening).not.toMatch(/\bAI\b/u);
     const a = await c.say("Namaste, Doctor Viswanath garu hospital ki eppudu vastharu? Consultation fee entha?");
     expect(a.reply).toContain("Dr. విశ్వనాథ్ గారు cardiologist అండి");
@@ -108,7 +108,7 @@ describe("English callers get English", () => {
 describe("outbound new-visit alert", () => {
   it("checks identity, offers the visit, books with the known name", async () => {
     const c = await outbound();
-    expect(c.opening).toBe("నమస్కారం అండి! సాయి విశ్వాస్ hospital నుంచి రవి మాట్లాడుతున్నాను. లక్ష్మి గారితోనే మాట్లాడుతున్నానా అండి?");
+    expect(c.opening).toBe("నమస్కారం అండి. నేను శంకర్, సాయి విశ్వాస్ hospital నుంచి మాట్లాడుతున్నాను. గాయత్రి గారితో మాట్లాడుతున్నానా?");
     const o = await c.say("ఆ నేనే చెప్పండి");
     expect(o.reply).toContain("cardiologist Dr. విశ్వనాథ్ గారు వస్తున్నారు");
     expect(o.step).toBe("offer");
@@ -116,16 +116,16 @@ describe("outbound new-visit alert", () => {
     expect(d.reply).toContain("November 22 కి కావాలా");
     expect(d.reply).not.toContain("పేరు"); // name is known
     const r = await c.say("25 కి");
-    expect(r.reply).toContain("లక్ష్మి గారు, November 25");
+    expect(r.reply).toContain("గాయత్రి గారు, November 25");
     const done = await c.say("అవును");
     expect(done.outcome?.kind).toBe("appointment_booked");
-    expect(detail(done.outcome)).toMatchObject({ patient: "Lakshmi Devi", date: "2026-11-25", direction: "outbound" });
+    expect(detail(done.outcome)).toMatchObject({ patient: "Gayathri", date: "2026-11-25", direction: "outbound" });
   });
 
   it("relative answering books for the patient", async () => {
     const c = await outbound();
     const r = await c.say("నేను వాళ్ళ అబ్బాయిని");
-    expect(r.reply).toContain("లక్ష్మి గారికి appointment book చేయమంటారా");
+    expect(r.reply).toContain("గాయత్రి గారికి appointment book చేయమంటారా");
     await c.say("అవును");
     await c.say("22");
     const done = await c.say("అవును");
@@ -250,15 +250,15 @@ describe("model fallback", () => {
 });
 
 describe("found by simulated callers (round 2)", () => {
-  it("'తప్పు నెంబర్', 'నేను లక్ష్మి గారు కాను' → wrong number, not a yes", async () => {
+  it("'తప్పు నెంబర్', 'నేను గాయత్రి గారు కాను' → wrong number, not a yes", async () => {
     const c = await outbound();
-    const r = await c.say("ఆ లేదండి, నేను లక్ష్మి గారు కాను, మీకు తప్పు నెంబర్‌కి call అయ్యింది.");
+    const r = await c.say("ఆ లేదండి, నేను గాయత్రి గారు కాను, మీకు తప్పు నెంబర్‌కి call అయ్యింది.");
     expect(r.outcome?.kind).toBe("pending_staff");
   });
 
   it("robot question + identity together: honest line, then straight to the offer (asked once)", async () => {
     const c = await outbound();
-    const r = await c.say("అవునండి నేనే లక్ష్మి, మీరు నిజంగా hospital వాళ్లా లేక robot ఆ అండి? ఎందుకు call చేస్తున్నారు చెప్పండి.");
+    const r = await c.say("అవునండి నేనే గాయత్రి, మీరు నిజంగా hospital వాళ్లా లేక robot ఆ అండి? ఎందుకు call చేస్తున్నారు చెప్పండి.");
     expect(r.reply).toContain("virtual assistant");
     expect(r.step).toBe("offer");
     const again = await c.say("robot అయినా పర్లేదండి, appointment book చేయండి");
@@ -303,7 +303,7 @@ describe("found by simulated callers (round 3)", () => {
 
   it("robot + why: no 'contact reception' for 'ఏంటి విషయం'", async () => {
     const c = await outbound();
-    const r = await c.say("ఆ, నేనే లక్ష్మి… మీరేమో robot ఆ? ఎందుకు call చేశారు, ఏంటి విషయం అండి?");
+    const r = await c.say("ఆ, నేనే గాయత్రి… మీరేమో robot ఆ? ఎందుకు call చేశారు, ఏంటి విషయం అండి?");
     expect(r.reply).not.toContain("reception");
     expect(r.reply).toContain("Dr. విశ్వనాథ్");
   });

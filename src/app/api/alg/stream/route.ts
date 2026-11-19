@@ -22,6 +22,6 @@ export function GET(req: Request) {
         const { left, right } = call.recording();
         await updateAlgCall(id, { recording: await uploadAlgRecording(id, stereoWav(left, right)) });
       })().catch(console.error));
-    });
+    }, id.endsWith("-gemini") ? "gemini" : undefined);
   });
 }

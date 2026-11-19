@@ -177,3 +177,16 @@ export function getStore(): Store {
 export function setStoreForTests(s: Store | null) {
   singleton = s;
 }
+
+
+/** Read live booking capacity only for turns that reach the hospital model. */
+export async function loadAgentBookingCounts(): Promise<Record<string, number>> {
+  const counts: Record<string, number> = {};
+  for (const outcome of await getStore().listOutcomes()) {
+    for (const booking of (outcome.meta?.bookings as { doctorId: string; date: string }[] | undefined) ?? []) {
+      const slot = `${booking.doctorId}|${booking.date}`;
+      counts[slot] = (counts[slot] ?? 0) + 1;
+    }
+  }
+  return counts;
+}

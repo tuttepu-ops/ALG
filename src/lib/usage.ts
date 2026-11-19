@@ -3,6 +3,7 @@
 
 export const PRICES = {
   openai: {
+    "gemini-3.1-flash-lite": { inputUsdPer1M: 0.25, cachedInputUsdPer1M: 0.025, outputUsdPer1M: 1.5 },
     "gpt-5.4-mini": { inputUsdPer1M: 0.75, cachedInputUsdPer1M: 0.075, outputUsdPer1M: 4.5 },
     "gpt-5.4-nano": { inputUsdPer1M: 0.2, cachedInputUsdPer1M: 0.02, outputUsdPer1M: 1.25 },
   } as Record<string, { inputUsdPer1M: number; cachedInputUsdPer1M: number; outputUsdPer1M: number }>,

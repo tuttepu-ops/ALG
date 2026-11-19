@@ -20,8 +20,8 @@ const { newSession } = await import("../src/lib/workflow/engine");
 const { getConfig, resolveVoice } = await import("../src/lib/config");
 const { sarvamStt, sarvamTts } = await import("../src/lib/providers/sarvam");
 const { toSpeech } = await import("../src/lib/telugu/speech");
-const { ACKS } = await import("../src/lib/agent/hospitalAgent");
-const { getStore } = await import("../src/lib/storage/store");
+const { isHospitalCall } = await import("../src/lib/workflow/hospital");
+const { getStore, loadAgentBookingCounts } = await import("../src/lib/storage/store");
 
 const PORT = Number(process.env.PHONE_PORT || 8080);
 const SECRET = process.env.PHONE_SECRET || getConfig().pilotCode || "change-me";
@@ -33,15 +33,17 @@ const vobizKey = /^[a-f0-9]{64}$/.test(process.env.PHONE_SECRET ?? "") ? process
 const FAKE = process.env.PHONE_FAKE_AUDIO === "1";
 export const fakeWords: string[] = [];
 
-export async function makeDeps(orderId: string, log: (s: string) => void): Promise<PhoneDeps & { state: () => unknown }> {
+export async function makeDeps(orderId: string, log: (s: string) => void, provider?: "gemini"): Promise<PhoneDeps & { state: () => unknown }> {
   const order = (await new SampleOrderSource().get(orderId))!;
   const s = newSession(`call_${Date.now()}`, order);
+  if (provider) s.state.agentProvider = provider;
   let state = s.state;
   const voice = resolveVoice(undefined);
   return {
     state: () => state,
     opening: () => s.segments.map((x) => x.text).join(" "),
-    acks: ACKS,
+    acks: { te: [], en: [] },
+    endSilenceMs: () => state.agent?.callbackDigits !== undefined ? 900 : isHospitalCall(orderId) ? 500 : 700,
     log,
     unheard() {
       const h = state.agent?.history;
@@ -61,11 +63,9 @@ export async function makeDeps(orderId: string, log: (s: string) => void): Promi
       return wavToPcm8k(r.audio);
     },
     async turn(text, interrupted, ackPlayed, onFirst) {
-      const taken: Record<string, number> = {};
-      for (const o of await getStore().listOutcomes()) for (const b of ((o.meta?.bookings as { doctorId: string; date: string }[] | undefined) ?? [])) taken[`${b.doctorId}|${b.date}`] = (taken[`${b.doctorId}|${b.date}`] ?? 0) + 1;
-      const r = await runTurn({ state, order, text, interrupted, agentTaken: taken, onFirst, ackPlayed });
+      const r = await runTurn({ state, order, text, interrupted, onFirst, ackPlayed, agentTaken: loadAgentBookingCounts });
       state = r.state;
-      if (r.outcome) await getStore().recordOutcome(r.outcome);
+      if (r.outcome && provider !== "gemini") await getStore().recordOutcome(r.outcome);
       return { text: r.segments.map((x) => x.text).join(" "), closed: r.state.stage === "closed", lang: r.state.agent?.lang ?? "te", outcome: r.outcome };
     },
   };
@@ -120,6 +120,7 @@ export function attachPhoneSocket(
   ws: Pick<WebSocket, "on" | "send" | "close" | "readyState">,
   vobiz: boolean,
   onSaved?: (call: CallSession, seconds: number) => void,
+  provider?: "gemini",
 ) {
   let starting = false;
   let call: CallSession | null = null;
@@ -166,7 +167,7 @@ export function attachPhoneSocket(
       callId = `${new Date().toISOString().replace(/[:.]/g, "-")}_${safeId}`;
       const orderId = vobiz ? "HSP-ALERT-3001" : (m.start.customParameters?.orderId ?? "HSP-INBOUND");
       log(`call started (${vobiz ? "vobiz" : "twilio"}, ${orderId})`);
-      const deps = await makeDeps(orderId, log);
+      const deps = await makeDeps(orderId, log, provider);
       if (ws.readyState !== 1) return;
       call = new CallSession((o) => {
         if (ws.readyState !== 1) return;
@@ -184,7 +185,7 @@ export function attachPhoneSocket(
           log("hanging up");
           setTimeout(() => ws.close(), 300);
         }
-      }, vobiz ? { ...deps, acks: { te: [], en: [] } } : deps);
+      }, deps);
       await call.start();
     } else if (m.event === "media" && m.media && call && (!m.media.track || m.media.track === "inbound")) {
       call.onAudio(new Uint8Array(Buffer.from(m.media.payload, "base64")));

@@ -3,7 +3,7 @@
 
 export interface Hospital {
   name: string;
-  /** The agent's name ("Ravi"). */
+  /** The agent's name ("Shankar"). */
   agentName: string;
   /** How the agent says its name and the hospital in Telugu lines. */
   agentNameTe: string;
@@ -42,9 +42,9 @@ export interface PatientCall {
   direction: "outbound" | "inbound";
   /** Known for outbound calls; inbound callers are asked their name. */
   patientName: string | null;
-  /** "లక్ష్మి గారు" — how the agent addresses them in Telugu. */
+  /** "గాయత్రి గారు" — how the agent addresses them in Telugu. */
   nameTe: string | null;
-  /** "Lakshmi" — in English replies. */
+  /** "Gayathri" — in English replies. */
   nameEn: string | null;
   phoneMasked: string;
   village: string;
@@ -55,8 +55,8 @@ export interface PatientCall {
 
 export const HOSPITAL: Hospital = {
   name: "Sai Viswas Hospital",
-  agentName: "Ravi",
-  agentNameTe: "రవి",
+  agentName: "Shankar",
+  agentNameTe: "శంకర్",
   spokenNameTe: "సాయి విశ్వాస్ hospital",
   bring: {
     te: "old reports, scanning reports, current medication details ఏమున్నా",
@@ -84,7 +84,7 @@ export const DOCTORS: VisitingDoctor[] = [
 export const PATIENT_CALLS: PatientCall[] = [
   {
     id: "HSP-ALERT-3001", direction: "outbound",
-    patientName: "Lakshmi Devi", nameTe: "లక్ష్మి గారు", nameEn: "Lakshmi",
+    patientName: "Gayathri", nameTe: "గాయత్రి గారు", nameEn: "Gayathri",
     phoneMasked: "+91 xxxxxx3001", village: "Samalkot",
     reason: "Heart patient — asked to be told when a cardiologist visits", doctorId: "dr-viswanath",
   },

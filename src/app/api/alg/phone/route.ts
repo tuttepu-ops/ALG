@@ -8,15 +8,17 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   const denied = checkPilot(req);
   if (denied) return denied;
-  const to = ((await req.json().catch(() => null)) as { to?: unknown } | null)?.to;
+  const body = (await req.json().catch(() => null)) as { to?: unknown; agent?: unknown } | null;
+  const to = body?.to;
+  const gemini = body?.agent === "gemini";
   const { ALG_PUBLIC_URL: origin, ALG_TEST_NUMBERS: allowed, VOBIZ_AUTH_ID: account, VOBIZ_AUTH_TOKEN: token, VOBIZ_FROM: from } = process.env;
   if (typeof to !== "string" || !/^\+91\d{10}$/.test(to) || !allowed?.split(",").map((n) => n.trim()).includes(to)) {
     return Response.json({ error: "Enter an approved +91 test number." }, { status: 400 });
   }
-  if (!origin || !account || !token || !from || !process.env.OPENAI_API_KEY || !process.env.SARVAM_API_KEY) {
+  if (!origin || !account || !token || !from || !(gemini ? process.env.GEMINI_API_KEY : process.env.OPENAI_API_KEY) || !process.env.SARVAM_API_KEY) {
     return Response.json({ error: "Live phone testing has not been configured." }, { status: 503 });
   }
-  const id = `${Date.now()}-${randomUUID()}`;
+  const id = `${Date.now()}-${randomUUID()}${gemini ? "-gemini" : ""}`;
   try {
     const answer = phoneUrl(origin, "/api/alg/answer", id);
     const hangup = phoneUrl(origin, "/api/alg/hangup", id);

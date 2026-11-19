@@ -22,3 +22,5 @@ create table if not exists public.alg_agent_records (
   primary key (id, kind)
 );
 alter table public.alg_agent_records enable row level security;
+
+grant select, insert, update on table public.alg_calls, public.alg_agent_records to service_role;

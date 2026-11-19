@@ -132,11 +132,134 @@ it("waits during partial callback digits and replaces them when the caller resta
   expect(state.agent?.callbackDigits).toBe("");
   await speak("7989");
   const full = await speak("Wrong number, that number was 9876543210");
-  expect(full.segments[0].text).toContain("9, 8, 7, 6, 5, 4, 3, 2, 1, 0");
+  expect(full.segments[0].text).toContain("nine, eight, seven, six, five… four, three, two, one, zero");
   expect(full.outcome).toBeNull();
-  expect((await speak("Can you repeat it again?")).segments[0].text).toContain("9, 8, 7, 6, 5");
+  expect((await speak("Can you repeat it again?")).segments[0].text).toContain("nine, eight, seven, six, five");
   const confirmed = await speak("Yes, that's correct");
   expect(confirmed.outcome?.kind).toBe("callback");
   expect(JSON.parse(confirmed.outcome!.detail!)).toEqual({ callbackNumber: "+919876543210" });
+  expect(m.request).not.toHaveBeenCalled();
+});
+
+it.each([undefined, "gemini-3.1-flash-lite"])("handles the family callback transcript for %s", async (modelOverride) => {
+  let state = await start("HSP-ALERT-3001");
+  const m = model();
+  const taken = vi.fn(async () => ({}));
+  const speak = async (text: string) => {
+    const result = await agentTurn(state, text, false, { now: NOW, request: m.request, modelOverride, taken });
+    state = result.state;
+    return result;
+  };
+  const family = await speak("ఆ లేదండి గాయత్రి గారు వాళ్ళ అబ్బాయితో మాట్లాడుతున్నారు");
+  expect(family.segments[0].text).toContain("గాయత్రి గారు ఎప్పుడు available");
+  const repeat = await speak("అర్థం కాలేదు మళ్ళీ చెప్పండి.");
+  expect(repeat.segments[0].text).toContain("callback");
+  expect(repeat.segments[0].text).not.toMatch(/cardiologist|విశ్వనాథ్|consultation|appointment/iu);
+  const request = await speak("ఆ ఉందండి నేను వేరే number చెప్తాను ఆ number note చేసుకోండి.");
+  expect(request.segments[0].text).toContain("హా, చెప్పండి అండి. నేను note చేసుకుంటాను.");
+  const readback = await speak("9876543210");
+  expect(readback.outcome).toBeNull();
+  const rejected = await speak("ఆ correct కాదు అండి.");
+  expect(rejected.outcome).toBeNull();
+  expect(state.agent?.callbackDigits).toBe("");
+  await speak("9876543210");
+  const unclear = await speak("correct?");
+  expect(unclear.outcome).toBeNull();
+  expect(unclear.segments[0].text).not.toContain("nine, eight, seven");
+  const corrected = await speak("Last digit zero కాదు, two.");
+  expect(corrected.segments[0].text).toContain("four, three, two, one, two");
+  expect(corrected.outcome).toBeNull();
+  const confirmed = await speak("ఆ correct అండి.");
+  expect(confirmed.outcome?.kind).toBe("callback");
+  expect(confirmed.segments[0].text).toContain("Thanks for sharing the number. Have a nice day. Bye!");
+  expect(confirmed.state.confirmedCallbackNumber).toBe("+919876543212");
+  expect(taken).not.toHaveBeenCalled();
+  expect(confirmed.state.stage).toBe("closed");
+  expect(m.request).not.toHaveBeenCalled();
+});
+
+
+it.each(["ఆ అవునండి.", "ఆ ఉండండి గాయత్రినే మాట్లాడేది చెప్పండి."])("explains the reason after clear identification: %s", async text => {
+  const m = model();
+  const result = await agentTurn(await start("HSP-ALERT-3001"), text, false, { now: NOW, request: m.request });
+  expect(result.segments[0].text).toContain("visit గురించి call చేశాను");
+  expect(result.state.agent?.patientIdentified).toBe(true);
+  expect(m.request).not.toHaveBeenCalled();
+});
+
+it("preserves the cause of an OpenAI quota error in diagnostics", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+    error: { code: "insufficient_quota", message: "quota exhausted" },
+  }, { status: 429 })));
+  try {
+    const result = await agentTurn(await start(), "Visit dates please", false, { now: NOW, onFirst: () => {} });
+    expect(result.diag?.error).toMatchObject({ kind: "quota", status: 429, code: "insufficient_quota" });
+    expect(result.outcome).toBeNull();
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
+
+it.each([undefined, "gemini-3.1-flash-lite"])("handles the caller handoff and a three-digit correction with %s", async (modelOverride) => {
+  let state = await start("HSP-ALERT-3001");
+  const m = model();
+  const speak = async (utterance: string) => {
+    const result = await agentTurn(state, utterance, false, { now: NOW, request: m.request, modelOverride });
+    state = result.state;
+    return result;
+  };
+
+  await speak("కాదండి గాయత్రి గారి భర్త విష్ణు గారితో మాట్లాడుతున్నారు");
+  for (const handoff of [
+    "ఇస్తున్నానండి phone ఆవిడకి.",
+    "phone ఇస్తున్నానండి మాట్లాడండి.",
+    "ఇస్తున్నానండి phone మాట్లాడండి line-లో ఉన్నారు.",
+  ]) {
+    const result = await speak(handoff);
+    expect(result.segments[0].text).toContain("మీ పేరు చెప్పగలరా");
+    expect(result.segments[0].text).not.toContain("visit");
+    expect(state.agent?.patientIdentified).toBe(false);
+  }
+  expect((await speak("ఆ అవునండి.")).segments[0].text).toContain("మీ పేరు చెప్పగలరా");
+  expect(state.agent?.patientIdentified).toBe(false);
+  expect((await speak("చెప్పండి నేను Gayathri గారిని.")).segments[0].text).toContain("visit గురించి call చేశాను");
+  expect(state.agent?.patientIdentified).toBe(true);
+
+  await speak("ఆ నేను వేరే number చెప్తాను ఆ number-కి call చేయండి.");
+  await speak("9876543210.");
+  const corrected = await speak("అండి. last 3 digits 459.");
+  expect(corrected.segments[0].text).toContain("four, three, four, five, nine");
+  expect(corrected.outcome).toBeNull();
+  expect(state.agent?.callbackDigits).toBe("9876543459");
+  const lineCheck = await speak("ఏం voice కొంచెం ఆడుకో ఉంది.");
+  expect(lineCheck.segments[0].text).toContain("four, three, four, five, nine");
+  const confirmed = await speak("ఆ correct అండి.");
+  expect(confirmed.state.confirmedCallbackNumber).toBe("+919876543459");
+  expect(m.request).not.toHaveBeenCalled();
+});
+
+it("asks for the missing digit when the same nine digits are repeated", async () => {
+  let state = await start("HSP-ALERT-3001");
+  const m = model();
+  for (const utterance of ["ఇంకో number చెప్తాను", "987654321", "987654321", "Hello Hello"]) {
+    const result = await agentTurn(state, utterance, false, { now: NOW, request: m.request });
+    state = result.state;
+  }
+  expect(state.agent?.callbackDigits).toBe("987654321");
+  expect(state.lastReply[0].text).toContain("చివరి digit ఒక్కటి");
+  const complete = await agentTurn(state, "zero", false, { now: NOW, request: m.request });
+  expect(complete.state.agent?.callbackDigits).toBe("9876543210");
+  expect(complete.outcome).toBeNull();
+});
+
+
+it("keeps visit details private on ambiguous first replies", async () => {
+  const m = model();
+  for (const text of ["Okay.", "గాయత్రి గారేనా?", "నేను గాయత్రి గారి మేనల్లుడిని."]) {
+    const result = await agentTurn(await start("HSP-ALERT-3001"), text, false, { now: NOW, request: m.request });
+    expect(result.state.agent?.patientIdentified).toBeFalsy();
+    expect(result.segments[0].text).not.toContain("visit");
+  }
   expect(m.request).not.toHaveBeenCalled();
 });

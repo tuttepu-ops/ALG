@@ -22,9 +22,10 @@ export async function POST(req: Request) {
     savedAt: new Date().toISOString(),
   };
   if (algStorageReady()) await putAlgCall({
-    id: report.sessionId, channel: "browser", status: "Completed",
+    id: state.agentProvider === "gemini" ? `${report.sessionId}-gemini` : report.sessionId, channel: "browser", status: "Completed",
     started_at: report.savedAt, seconds: Number(report.usage?.sessionSeconds) || 0,
-    cost_inr: report.costInr, outcome: report.outcome, transcript: report.turns.map(({ who, text }) => ({ who, text })),
+    cost_inr: report.costInr, outcome: report.outcome === "callback" && state.confirmedCallbackNumber
+      ? { kind: "callback", callbackNumber: state.confirmedCallbackNumber } : report.outcome, transcript: report.turns.map(({ who, text }) => ({ who, text })),
   });
   await getStore().saveReport(report);
   return Response.json({ ok: true });

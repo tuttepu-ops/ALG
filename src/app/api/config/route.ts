@@ -13,7 +13,7 @@ export async function GET() {
     pilotRequired: pilotRequired(),
     // Lets the gate explain a rejected code without revealing the code itself.
     pilotHint: !cfg.pilotCode ? "none" : cfg.pilotCode === "change-me" ? "placeholder" : "set",
-    providers: { openaiKeySet: !!cfg.openaiKey, sarvamKeySet: !!cfg.sarvamKey },
+    providers: { openaiKeySet: !!cfg.openaiKey, geminiKeySet: !!process.env.GEMINI_API_KEY, sarvamKeySet: !!cfg.sarvamKey },
     llm: { model: cfg.openaiModel, effort: cfg.openaiEffort, maxOutputTokens: cfg.openaiMaxOutputTokens },
     stt: { provider: "Sarvam", model: cfg.sttModel, mode: cfg.sttMode, language: cfg.sttLanguage },
     voices: cfg.voices,

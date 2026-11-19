@@ -64,8 +64,10 @@ export function takenSlots(outcomes: Pick<Outcome, "kind" | "detail">[], doctor:
 const obl = (name: string) => name.replace(/గారు$/u, "గారి");
 
 export function hospitalOpening(call: PatientCall): string {
-  const hello = `నమస్కారం అండి! ${HOSPITAL.spokenNameTe} నుంచి ${HOSPITAL.agentNameTe} మాట్లాడుతున్నాను.`;
-  return call.direction === "inbound" ? `${hello} చెప్పండి అండి, మీకు ఎలా help చేయగలను?` : `${hello} ${obl(call.nameTe!)}తోనే మాట్లాడుతున్నానా అండి?`;
+  if (call.direction === "inbound") {
+    return `నమస్కారం అండి! ${HOSPITAL.spokenNameTe} నుంచి ${HOSPITAL.agentNameTe} మాట్లాడుతున్నాను. చెప్పండి అండి, మీకు ఎలా help చేయగలను?`;
+  }
+  return `నమస్కారం అండి. నేను ${HOSPITAL.agentNameTe}, ${HOSPITAL.spokenNameTe} నుంచి మాట్లాడుతున్నాను. ${obl(call.nameTe!)}తో మాట్లాడుతున్నానా?`;
 }
 
 const STAGE: Record<HospitalStep, SessionState["stage"]> = {

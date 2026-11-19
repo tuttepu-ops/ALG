@@ -1,9 +1,9 @@
 import { checkPilot } from "@/lib/auth";
-import { resolveVoice } from "@/lib/config";
+import { getConfig, resolveVoice } from "@/lib/config";
 import { orderSource } from "@/lib/orders/orders";
 import { planAudio } from "@/lib/providers/ttsCache";
 import { signState, verifyState } from "@/lib/session";
-import { getStore } from "@/lib/storage/store";
+import { getStore, loadAgentBookingCounts } from "@/lib/storage/store";
 import { runTurn } from "@/lib/turn";
 import { doctorFor } from "@/lib/hospital/data";
 import { findPatientCall, takenSlots } from "@/lib/workflow/hospital";
@@ -34,18 +34,14 @@ export async function POST(req: Request) {
   const order = await orderSource.get(state.orderId);
   if (!order) return Response.json({ error: "Order not found" }, { status: 404 });
 
-  // Hospital: slots booked by other calls count against capacity.
   const patient = findPatientCall(order.id);
-  const taken = patient ? takenSlots(await getStore().listOutcomes(), doctorFor(patient)) : undefined;
-  // AI agent: capacity per doctor and date from all recorded bookings.
-  const agentTaken: Record<string, number> = {};
-  if (patient) for (const o of await getStore().listOutcomes()) {
-    for (const b of ((o.meta?.bookings as { doctorId: string; date: string }[] | undefined) ?? [])) agentTaken[`${b.doctorId}|${b.date}`] = (agentTaken[`${b.doctorId}|${b.date}`] ?? 0) + 1;
-  }
+  const ai = patient && (state.agentProvider === "gemini" || getConfig().hospitalEngine === "ai");
+  const taken = patient && !ai ? takenSlots(await getStore().listOutcomes(), doctorFor(patient)) : undefined;
+  const agentTaken = ai ? loadAgentBookingCounts : undefined;
   const voice = resolveVoice(body.voice);
   const finish = async (result: Awaited<ReturnType<typeof runTurn>>, spokenFirst: string | null) => {
     let outcomeStored: boolean | null = null;
-    if (result.outcome) outcomeStored = (await getStore().recordOutcome(result.outcome)).stored;
+    if (result.outcome && state.agentProvider !== "gemini") outcomeStored = (await getStore().recordOutcome(result.outcome)).stored;
     // When the first sentence was already sent (streaming), the reply segments are only the rest.
     const full = result.segments.map((s) => s.text).join(" ");
     const rest = spokenFirst && full.startsWith(spokenFirst) ? full.slice(spokenFirst.length).trim() : spokenFirst ? full : null;
@@ -57,7 +53,7 @@ export async function POST(req: Request) {
       unclearStreak: result.state.unclearStreak,
       pendingDetail: result.state.pendingDetail,
       sessionOutcome: result.state.outcome,
-      reply: { segments: planAudio(segments, voice), fullText: full, firstSent: spokenFirst },
+      reply: { segments: planAudio(segments.filter((segment) => segment.text.trim()), voice), fullText: full, firstSent: spokenFirst },
       outcome: result.outcome,
       outcomeStored,
       diag: result.diag,

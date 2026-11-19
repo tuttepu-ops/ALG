@@ -6,10 +6,11 @@ import { pcmToUlaw, ulawToPcm, wavToPcm8k, pcmToWav } from "../phone/audio";
 const frame = (amp: number) => pcmToUlaw(Int16Array.from({ length: 160 }, () => Math.round((Math.random() * 2 - 1) * amp)));
 const tone = (ms: number) => Int16Array.from({ length: ms * 8 }, (_, i) => Math.round(Math.sin(i / 3) * 4000));
 
-function fakeCall(replies: string[], opts: { closeOnLast?: boolean } = {}) {
+function fakeCall(replies: string[], opts: { closeOnLast?: boolean; endSilenceMs?: () => number } = {}) {
   const sent: Outgoing[] = [];
   const said: string[] = [];
   const deps: PhoneDeps = {
+    endSilenceMs: opts.endSilenceMs,
     opening: () => "నమస్కారం అండి!",
     acks: { te: ["హా అండి."], en: ["Sure."] },
     stt: async () => said.shift() ?? "",
@@ -45,7 +46,30 @@ describe("phone bridge", () => {
     await flush();
     expect(c.sent.length).toBeGreaterThan(afterOpening);
     expect(c.call.transcript.map((t) => t.text)).toEqual(["నమస్కారం అండి!", "fee ఎంత?", "హా అండి. Dr. Viswanath గారు cardiologist అండి. Fee 100 rupees."]);
-    expect(c.call.timings[0].ackAfterMs).toBeLessThan(20);
+    expect(c.call.timings[0].ackAfterMs).toBeGreaterThanOrEqual(700);
+  });
+
+  it("responds to a short acknowledgement after 500 ms, with more time for phone numbers", async () => {
+    let collectingNumber = false;
+    const c = fakeCall(["Okay.", "Let me read that back."], {
+      endSilenceMs: () => collectingNumber ? 900 : 500,
+    });
+    await c.call.start();
+    c.quiet(3000);
+    c.speak("yes", 200);
+    c.quiet(500);
+    await flush();
+    expect(c.call.timings[0].firstAudioAfterMs).toBeGreaterThanOrEqual(500);
+
+    collectingNumber = true;
+    c.quiet(3000);
+    c.speak("9876543210", 1000);
+    c.quiet(500);
+    await flush();
+    expect(c.call.timings).toHaveLength(1);
+    c.quiet(400);
+    await flush();
+    expect(c.call.timings[1].firstAudioAfterMs).toBeGreaterThanOrEqual(900);
   });
 
   it("ignores clicks/breaths shorter than speech", async () => {

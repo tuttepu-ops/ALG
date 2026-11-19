@@ -22,6 +22,8 @@ export interface PhoneDeps {
   /** One caller turn; onFirst gets the first sentence early. */
   turn(text: string, interrupted: boolean, ackPlayed: string | null, onFirst: (s: string) => void): Promise<TurnResult>;
   acks: { te: string[]; en: string[] };
+  /** Quiet time before sending the utterance to recognition. */
+  endSilenceMs?: () => number;
   /** The last reply was dropped because the caller spoke first — the agent should know they didn't hear it. */
   unheard?: () => void;
   log?: (line: string) => void;
@@ -57,7 +59,6 @@ export class CallSession {
   /** Sample index (on the caller timeline) when Ravi's queued audio ends. */
   private playEnd = 0;
   private gen = 0;
-  private queue: Promise<void> = Promise.resolve();
   private busy = false;
   private interruptedNext = false;
   private ackCache = new Map<string, Int16Array>();
@@ -75,10 +76,11 @@ export class CallSession {
   async start() {
     const opening = this.deps.opening();
     const generation = this.gen;
-    const [pcm] = await Promise.all([
-      this.deps.tts(opening),
-      ...[...this.deps.acks.te, ...this.deps.acks.en].map(async (a) => { try { this.ackCache.set(a, await this.deps.tts(a)); } catch { /* ack is optional */ } }),
-    ]);
+    const openingAudio = this.deps.tts(opening);
+    for (const ack of [...this.deps.acks.te, ...this.deps.acks.en]) {
+      void this.deps.tts(ack).then(audio => this.ackCache.set(ack, audio)).catch(() => { /* ack is optional */ });
+    }
+    const pcm = await openingAudio;
     if (this.closed || this.inSpeech || generation !== this.gen) return;
     this.transcript.push({ at: this.now(), who: "ravi", text: opening });
     this.play(pcm);
@@ -140,8 +142,10 @@ export class CallSession {
     this.utterance.push(pcm);
     if (voiced) { this.speechFrames++; this.silenceFrames = 0; } else this.silenceFrames++;
     const total = this.utterance.length;
-    // End of sentence: 700 ms of quiet after at least 300 ms of speech (or 15 s max).
-    if ((this.silenceFrames >= 35 && this.speechFrames >= 15) || total >= 750) {
+    // Allow more quiet during number collection so pauses between digit groups are natural.
+    const quietMs = ms(this.silenceFrames);
+    const endOfSpeech = quietMs >= (this.deps.endSilenceMs?.() ?? 700);
+    if ((endOfSpeech && this.speechFrames >= 9) || total >= 750) {
       const all = new Int16Array(this.utterance.reduce((n, a) => n + a.length, 0));
       let o = 0;
       for (const a of this.utterance) { all.set(a, o); o += a.length; }
@@ -149,8 +153,8 @@ export class CallSession {
       this.utterance = [];
       this.runFrames = 0;
       this.idleFrames = 0;
-      void this.handleUtterance(all, false);
-    } else if (this.silenceFrames >= 35) {
+      void this.handleUtterance(all, false, quietMs);
+    } else if (endOfSpeech) {
       // Too short to be speech (a click or a breath).
       this.inSpeech = false;
       this.utterance = [];
@@ -158,9 +162,9 @@ export class CallSession {
     }
   }
 
-  private async handleUtterance(pcm: Int16Array, silence: boolean) {
+  private async handleUtterance(pcm: Int16Array, silence: boolean, quietMs = 0) {
     if (this.closed) return;
-    const t0 = Date.now();
+    const t0 = Date.now() - quietMs;
     const myGen = ++this.gen;
     const interrupted = this.interruptedNext;
     this.interruptedNext = false;
@@ -186,11 +190,15 @@ export class CallSession {
     this.log(`CALLER: ${text || "(silence)"}`);
     if (silence && ++this.silencePrompts > 3) { this.finish(); return; }
     let firstAudioAfterMs: number | null = null;
+    let playback = Promise.resolve();
     const say = (s: string) => {
-      const p = this.deps.tts(s);
-      this.queue = this.queue.then(async () => {
-        const audio = await p.catch(() => new Int16Array(0));
-        if (myGen !== this.gen || this.closed || this.inSpeech) return;
+      const synthesis = this.deps.tts(s).catch(error => {
+        this.log(`[tts failed: ${(error as Error).message}]`);
+        return null;
+      });
+      playback = playback.then(async () => {
+        const audio = await synthesis;
+        if (!audio?.length || myGen !== this.gen || this.closed || this.inSpeech) return;
         if (firstAudioAfterMs === null) firstAudioAfterMs = Date.now() - t0;
         this.play(audio);
       });
@@ -204,8 +212,9 @@ export class CallSession {
     const full = `${ack ? `${ack} ` : ""}${r.text}`;
     this.transcript.push({ at: this.now(), who: "ravi", text: full });
     this.log(`RAVI  : ${full}`);
-    await this.queue;
+    await playback;
     this.timings.push({ said: text, reply: r.text, sttMs, ackAfterMs, firstAudioAfterMs, totalReplyMs: Date.now() - t0 });
+    this.log(`[response timing: pause ${quietMs} ms, STT ${sttMs} ms, first reply audio ${firstAudioAfterMs ?? "unavailable"}${firstAudioAfterMs === null ? "" : " ms"}]`);
     if (r.outcome) this.outcome = r.outcome;
     this.busy = false;
     if (r.closed && myGen === this.gen && !this.inSpeech) {

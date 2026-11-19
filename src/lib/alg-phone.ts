@@ -8,7 +8,7 @@ export function phoneTicket(id: string) {
 
 export function phoneCallId(url: URL) {
   const id = url.searchParams.get("id");
-  if (!id || !/^\d{13}-[a-f0-9-]{36}$/.test(id)) return null;
+  if (!id || !/^\d{13}-[a-f0-9-]{36}(?:-gemini)?$/.test(id)) return null;
   const age = Date.now() - Number(id.slice(0, 13));
   if (age < -30000 || age > 600000) return null;
   try {

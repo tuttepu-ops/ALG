@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { HOSPITAL } from "@/lib/hospital/data";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "ALG | Voice agent dashboard",
-  description: "Test Ravi and review voice calls",
+  description: `Test ${HOSPITAL.agentName} and review voice calls`,
   robots: { index: false, follow: false },
 };
 

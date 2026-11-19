@@ -1,6 +1,6 @@
 # ALG
 
-ALG is a Next.js dashboard for Ravi, the Telugu–English Sai Viswas voice agent. The public overview starts with sample data. The live dashboard, microphone test and outbound calling require a pilot code for hosted deployments.
+ALG is a Next.js dashboard for Shankar, the Telugu–English Sai Viswas voice agent. The public overview starts with sample data. The live dashboard, microphone test and outbound calling require a pilot code for hosted deployments.
 
 ## Preview locally
 
@@ -18,8 +18,8 @@ Use Node.js 22 LTS. Run `npm ci` and `npm run dev:3001`. Open http://localhost:3
 | `SESSION_SECRET` | Independent value from `openssl rand -hex 32` |
 | `OPENAI_API_KEY` | OpenAI server API key |
 | `SARVAM_API_KEY` | Sarvam server API key |
-| `SARVAM_CLONE_VOICE_ID` | Optional existing Ravi clone ID. If blank, the app uses its configured stock voice. |
-| `AGENT_MODEL` | Optional. Existing Ravi default is GPT-5.5; test `gpt-5.4-mini` if you want the lower-cost pilot configuration. |
+| `SARVAM_CLONE_VOICE_ID` | Optional existing Shankar clone ID. If blank, the app uses its configured stock voice. |
+| `AGENT_MODEL` | Optional. Existing Shankar default is GPT-5.5; test `gpt-5.4-mini` if you want the lower-cost pilot configuration. |
 | `SUPABASE_URL` | Project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase **legacy service_role** JWT key. Server only. |
 | `VOBIZ_AUTH_ID`, `VOBIZ_AUTH_TOKEN`, `VOBIZ_FROM` | The existing Vobiz account values and outbound caller ID |
@@ -38,3 +38,9 @@ Leave Vercel Deployment Protection off the production callback routes or configu
 - Call outcomes and audio depend on Vobiz sending successful callbacks and Supabase accepting the writes. Phone cost stays blank until actual carrier billing is integrated. Browser cost is estimated. The overview uses the latest 250 saved records.
 - This is a single private demo workspace. The pilot code grants access to all live logs. Use testers who know the call is being recorded, and use dummy hospital data for demos.
 - The original local Vobiz and Twilio commands are retained. See [PHONE-TEST.md](PHONE-TEST.md) for the original local Twilio instructions.
+
+## Voice Studio and Gemini comparison
+
+Open Voice Studio and choose **Shankar · GPT** or **Shankar · Gemini 3.1 Flash-Lite**, then choose the browser microphone or Vobiz phone channel. GPT remains the default. Set the server-side `GEMINI_API_KEY` to enable the separate Gemini test path. Keep the existing OpenAI and Sarvam variables. Both agents use the same Sarvam speech and Vobiz phone integration.
+
+Gemini test outcomes are saved with the call log without updating the shared booking and outcome store. Use synthetic patient information. Transcripts and recordings appear after the call is saved. Set `WS_NO_BUFFER_UTIL=1` on Vercel for the real phone stream.

@@ -79,6 +79,8 @@ export interface Segment {
 }
 
 export interface SessionState {
+  agentProvider?: "gemini";
+  confirmedCallbackNumber?: string;
   v: 1;
   sessionId: string;
   orderId: string;

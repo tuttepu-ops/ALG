@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ReplyPlayer, type AudioSource, type PlanSegment, type SegmentPlayback } from "./audio";
 import { CallSound, DEFAULT_CALL_SOUND, type CallSoundSettings } from "./fx";
 import { Mic } from "./mic";
+import { HOSPITAL } from "@/lib/hospital/data";
 import { costInr, emptyUsage, inr, type SessionUsage } from "@/lib/usage";
 
 // ---------- types mirrored from the API ----------
@@ -11,7 +12,7 @@ interface Voice { id: string; model: string; label: string; inrPer1kChars: numbe
 interface Config {
   pilotRequired: boolean;
   pilotHint?: "none" | "placeholder" | "set";
-  providers: { openaiKeySet: boolean; sarvamKeySet: boolean };
+  providers: { openaiKeySet: boolean; geminiKeySet?: boolean; sarvamKeySet: boolean };
   llm: { model: string; effort: string; maxOutputTokens: number };
   stt: { provider: string; model: string; mode: string; language: string };
   voices: Voice[];
@@ -103,7 +104,8 @@ const OUTCOME_LABEL: Record<string, string> = {
   urgent_referral: "URGENT · told to call 108",
 };
 
-export default function App() {
+export default function App({ agent }: { agent?: "gemini" } = {}) {
+  const providerName = agent === "gemini" ? "Gemini" : "OpenAI";
   const [cfg, setCfg] = useState<Config | null>(null);
   const [code, setCode] = useState<string>("");
   const [codeOk, setCodeOk] = useState(false);
@@ -264,7 +266,7 @@ export default function App() {
     micRef.current?.cancel();
     bumpUsage(() => {});
     const u = usageRef.current;
-    const cost = costInr(u, { model: cfg?.llm.model ?? "gpt-5.4-mini", ttsModel: voiceModel, usdInr: cfg?.usdInr ?? 88 });
+    const cost = costInr(u, { model: agent === "gemini" ? "gemini-3.1-flash-lite" : (cfg?.llm.model ?? "gpt-5.4-mini"), ttsModel: voiceModel, usdInr: cfg?.usdInr ?? 88 });
     try {
       await api("/api/report", {
         method: "POST",
@@ -374,7 +376,8 @@ export default function App() {
         next = { segments: segs, agentId: streamAgentId, closed: j.stage === "closed" };
       } else {
         const agentId = uid();
-        setEntries((es) => [...es, { id: agentId, who: "agent", text: segs.map((s) => s.text).join(" "), route: diag.route, intent: diag.intent, segments: segs }]);
+        if (segs.length) setEntries((es) => [...es, { id: agentId, who: "agent", text: segs.map((s) => s.text).join(" "), route: diag.route, intent: diag.intent, segments: segs }]);
+        else setStatus("idle");
         next = { segments: segs, agentId, closed: j.stage === "closed" };
       }
     } catch (e) {
@@ -483,7 +486,7 @@ export default function App() {
       const r = await api("/api/session/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: selectedOrderId, voice: voiceRef.current }),
+        body: JSON.stringify({ orderId: selectedOrderId, voice: voiceRef.current, agent }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error ?? `HTTP ${r.status}`);
@@ -563,10 +566,10 @@ export default function App() {
   };
 
   // ---------- derived ----------
-  const cost = costInr(usage, { model: cfg?.llm.model ?? "gpt-5.4-mini", ttsModel: voiceModel, usdInr: cfg?.usdInr ?? 88 });
+  const cost = costInr(usage, { model: agent === "gemini" ? "gemini-3.1-flash-lite" : (cfg?.llm.model ?? "gpt-5.4-mini"), ttsModel: voiceModel, usdInr: cfg?.usdInr ?? 88 });
   const order = orders.find((o) => o.id === selectedOrderId);
   const lastAudio = [...entries].reverse().find((e) => e.who === "agent" && e.audio)?.audio;
-  const lastLlm = [...rows].reverse().find((r) => r.diag?.llm?.called)?.diag?.llm;
+  const lastLlm = [...rows].reverse().find((r) => r.diag?.llm)?.diag?.llm;
   const lastStt = [...rows].reverse().find((r) => r.stt)?.stt;
   const inSession = status === "starting" || (!!tokenRef.current && status !== "done");
 
@@ -630,7 +633,7 @@ export default function App() {
         <Brand />
         <div className="chips">
           <Chip ok={cfg?.providers.sarvamKeySet} label="Sarvam" />
-          <Chip ok={cfg?.providers.openaiKeySet} label="OpenAI" />
+          <Chip ok={agent === "gemini" ? cfg?.providers.geminiKeySet : cfg?.providers.openaiKeySet} label={agent === "gemini" ? "Gemini" : "OpenAI"} />
         </div>
       </header>
 
@@ -691,7 +694,7 @@ export default function App() {
                   )}
                   {e.who === "agent" && e.route && (
                     <span className={`tag ${e.route === "openai_failed" ? "bad" : ""}`}>
-                      {e.route === "workflow" ? "workflow" : e.route === "openai" ? "OpenAI" : "OpenAI FAILED → clarify"}
+                      {e.route === "workflow" ? "workflow" : e.route === "openai" ? providerName : `${providerName} FAILED → clarify`}
                       {e.intent ? ` · ${e.intent}` : ""}
                     </span>
                   )}
@@ -733,7 +736,7 @@ export default function App() {
             </section>
           )}
 
-          <UsageCard usage={usage} cost={cost} />
+          <UsageCard usage={usage} cost={cost} providerName={providerName} />
           {order && <p className="muted small center">Order data comes from the app ({order.items.length} items, ₹{order.total}); the model never sets totals.</p>}
         </>
       )}
@@ -818,8 +821,8 @@ export default function App() {
             <table><tbody>
               <tr><th>Recognition</th><td>{cfg.stt.provider} {cfg.stt.model} ({cfg.stt.mode}, {cfg.stt.language}) · key {cfg.providers.sarvamKeySet ? "set" : "MISSING"}</td></tr>
               <tr><th>Last recognition</th><td>{lastStt ? `${lastStt.provider} ${lastStt.model} · ${lastStt.ok ? "OK" : "FAILED"} · ${lastStt.seconds}s audio · ${lastStt.latencyMs} ms${lastStt.error ? ` · ${lastStt.error}` : ""}` : "—"}</td></tr>
-              <tr><th>Understanding</th><td>OpenAI {cfg.llm.model} · effort {cfg.llm.effort} · max {cfg.llm.maxOutputTokens} out tok · key {cfg.providers.openaiKeySet ? "set" : "MISSING"}</td></tr>
-              <tr><th>Last OpenAI call</th><td>{lastLlm ? (lastLlm.ok ? `OK · ${lastLlm.usage?.inputTokens} in / ${lastLlm.usage?.outputTokens} out · ${lastLlm.latencyMs} ms${lastLlm.retried ? " · retried once" : ""}` : `FAILED · ${lastLlm.error?.summary}`) : "none yet (clear replies use the workflow)"}</td></tr>
+              <tr><th>Understanding</th><td>{agent === "gemini" ? `Gemini 3.1 Flash-Lite · key ${cfg.providers.geminiKeySet ? "set" : "MISSING"}` : `OpenAI ${cfg.llm.model} · effort ${cfg.llm.effort} · max ${cfg.llm.maxOutputTokens} out tok · key ${cfg.providers.openaiKeySet ? "set" : "MISSING"}`}</td></tr>
+              <tr><th>Last {providerName} call</th><td>{lastLlm ? (lastLlm.ok ? `OK · ${lastLlm.usage?.inputTokens} in / ${lastLlm.usage?.outputTokens} out · ${lastLlm.latencyMs} ms${lastLlm.retried ? " · retried once" : ""}` : `FAILED · ${lastLlm.model} · ${lastLlm.error?.summary ?? "No usable reply returned"}`) : "none yet (clear replies use the workflow)"}</td></tr>
               <tr><th>Voice</th><td>Sarvam {voiceModel} · {voice.speaker} · pace {pace} · device fallback {deviceFallback ? "ON" : "off"}</td></tr>
               <tr><th>Last playback</th><td>{lastAudio ? <AudioTags audio={lastAudio} /> : "—"}</td></tr>
               <tr><th>Storage</th><td>{cfg.storage.kind}{cfg.storage.persistent ? "" : " (not persistent)"}</td></tr>
@@ -838,7 +841,7 @@ export default function App() {
               )}
               {r.diag?.llm?.called && (
                 <div>
-                  OpenAI: {r.diag.llm.ok ? "OK" : "FAILED"} · {r.diag.llm.usage ? `${r.diag.llm.usage.inputTokens} in / ${r.diag.llm.usage.outputTokens} out tok · ` : ""}{r.diag.llm.latencyMs} ms
+                  {providerName}: {r.diag.llm.ok ? "OK" : "FAILED"} · {r.diag.llm.usage ? `${r.diag.llm.usage.inputTokens} in / ${r.diag.llm.usage.outputTokens} out tok · ` : ""}{r.diag.llm.latencyMs} ms
                   {r.diag.llm.retried && " · retried once"}
                   {r.diag.llm.error && <div className="bad">{r.diag.llm.error.summary}</div>}
                   {r.diag.llm.raw && <div className="muted mono">{r.diag.llm.raw}</div>}
@@ -849,7 +852,7 @@ export default function App() {
               {r.error && <div className="bad">{r.error}</div>}
             </div>
           ))}
-          <UsageCard usage={usage} cost={cost} />
+          <UsageCard usage={usage} cost={cost} providerName={providerName} />
         </section>
       )}
     </main>
@@ -862,7 +865,7 @@ function Brand() {
       
       <div>
         <div className="bname">ALG</div>
-        <div className="bsub">Ravi · Sai Viswas Hospital</div>
+        <div className="bsub">{HOSPITAL.agentName} · {HOSPITAL.name}</div>
       </div>
     </div>
   );
@@ -884,12 +887,12 @@ function AudioTags({ audio }: { audio: SegmentPlayback[] }) {
   );
 }
 
-function UsageCard({ usage, cost }: { usage: SessionUsage; cost: ReturnType<typeof costInr> }) {
+function UsageCard({ usage, cost, providerName }: { usage: SessionUsage; cost: ReturnType<typeof costInr>; providerName: string }) {
   return (
     <section className="card usage" aria-label="Session usage">
       <h3>This session</h3>
       <div className="grid">
-        <div><span className="k">Turns</span><span className="v">{usage.turns} ({usage.workflowTurns} workflow · {usage.openaiTurns} OpenAI)</span></div>
+        <div><span className="k">Turns</span><span className="v">{usage.turns} ({usage.workflowTurns} workflow · {usage.openaiTurns} {providerName})</span></div>
         <div><span className="k">LLM requests</span><span className="v">{usage.llmRequests}{usage.llmFailures ? ` (${usage.llmFailures} failed)` : ""}</span></div>
         <div><span className="k">LLM tokens</span><span className="v">{usage.llmInputTokens} in · {usage.llmOutputTokens} out</span></div>
         <div><span className="k">Sarvam TTS</span><span className="v">{usage.ttsCharsBilled} chars billed · {usage.ttsCharsReused} reused</span></div>
